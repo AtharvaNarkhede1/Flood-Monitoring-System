@@ -1,3 +1,4 @@
+
 // Type definitions for API data
 export interface WeatherData {
   location: string;
@@ -16,30 +17,56 @@ export interface SensorData {
   humidity: number; // 0-100 percentage
 }
 
-// These are placeholder functions to be replaced with your actual API calls
-export const fetchWeatherData = async (): Promise<WeatherData> => {
-  // This will be replaced with your backend API call
-  // For initial rendering, returning default values
-  return {
-    location: "Connecting...",
-    temperature: 0,
-    humidity: 0,
-    windSpeed: 0,
-    precipitation: 0,
-    description: "Waiting for API connection",
-    icon: "03d",
-  };
+// Backend API endpoint (change this to your actual backend URL)
+const API_URL = 'http://localhost:3000/api/data';
+
+// Fetch data from backend
+export const fetchAllData = async (): Promise<{
+  sensorData: SensorData;
+  weatherData: WeatherData;
+  predictionProbability: number;
+}> => {
+  try {
+    const response = await fetch(API_URL);
+    
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    // Return default values if API call fails
+    return {
+      sensorData: {
+        waterLevel: 0,
+        floatSensor: false,
+        temperature: 0,
+        humidity: 0
+      },
+      weatherData: {
+        location: "Connecting...",
+        temperature: 0,
+        humidity: 0,
+        windSpeed: 0,
+        precipitation: 0,
+        description: "Waiting for API connection",
+        icon: "03d"
+      },
+      predictionProbability: 0
+    };
+  }
 };
 
-export const getSensorData = (): SensorData => {
-  // This will be replaced with your backend API call
-  // For initial rendering, returning default values
-  return {
-    waterLevel: 0,
-    floatSensor: false,
-    temperature: 0,
-    humidity: 0,
-  };
+// These functions are kept for compatibility with existing components
+export const fetchWeatherData = async (): Promise<WeatherData> => {
+  const { weatherData } = await fetchAllData();
+  return weatherData;
+};
+
+export const getSensorData = async (): Promise<SensorData> => {
+  const { sensorData } = await fetchAllData();
+  return sensorData;
 };
 
 // Calculate prediction probability based on all data
