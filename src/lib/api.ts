@@ -1,8 +1,4 @@
-
-// OpenWeather API integration
-const OPENWEATHER_API_KEY = "YOUR_API_KEY"; // Replace with your API key
-const MOCK_MODE = true; // Set to false when you have your API key
-
+// Type definitions for API data
 export interface WeatherData {
   location: string;
   temperature: number;
@@ -13,53 +9,6 @@ export interface WeatherData {
   icon: string;
 }
 
-export const fetchWeatherData = async (
-  city = "London"
-): Promise<WeatherData> => {
-  if (MOCK_MODE) {
-    return getMockWeatherData();
-  }
-
-  try {
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${OPENWEATHER_API_KEY}`
-    );
-    
-    if (!response.ok) {
-      throw new Error("Weather data fetch failed");
-    }
-    
-    const data = await response.json();
-    
-    return {
-      location: data.name,
-      temperature: Math.round(data.main.temp),
-      humidity: data.main.humidity,
-      windSpeed: Math.round(data.wind.speed),
-      precipitation: data.rain ? data.rain["1h"] || 0 : 0,
-      description: data.weather[0].description,
-      icon: data.weather[0].icon,
-    };
-  } catch (error) {
-    console.error("Error fetching weather data:", error);
-    return getMockWeatherData();
-  }
-};
-
-// Mock data for demonstration
-const getMockWeatherData = (): WeatherData => {
-  return {
-    location: "Demo City",
-    temperature: 22,
-    humidity: 65,
-    windSpeed: 12,
-    precipitation: 30,
-    description: "Partly cloudy",
-    icon: "03d",
-  };
-};
-
-// Sensor data types
 export interface SensorData {
   waterLevel: number; // 0-100 percentage
   floatSensor: boolean; // true = water detected
@@ -67,63 +16,30 @@ export interface SensorData {
   humidity: number; // 0-100 percentage
 }
 
-// Mock sensor data - now with consistent values instead of random ones
-let mockSensorData: SensorData = {
-  waterLevel: 45,
-  floatSensor: false,
-  temperature: 24,
-  humidity: 60,
+// These are placeholder functions to be replaced with your actual API calls
+export const fetchWeatherData = async (): Promise<WeatherData> => {
+  // This will be replaced with your backend API call
+  // For initial rendering, returning default values
+  return {
+    location: "Connecting...",
+    temperature: 0,
+    humidity: 0,
+    windSpeed: 0,
+    precipitation: 0,
+    description: "Waiting for API connection",
+    icon: "03d",
+  };
 };
 
-// For simulation purposes - gradual changes to create realistic data patterns
-let trend = {
-  waterLevel: 1, // increasing
-  temperature: 0.5, // increasing
-  humidity: -0.5, // decreasing
-};
-
-// Get sensor data (mock for now, would be replaced with actual API calls or WebSocket)
 export const getSensorData = (): SensorData => {
-  // For demonstration, make small changes to simulate real sensor fluctuations
-  if (MOCK_MODE) {
-    // Update water level with trend, and reverse trend if limits are reached
-    mockSensorData.waterLevel += trend.waterLevel;
-    if (mockSensorData.waterLevel >= 98) {
-      trend.waterLevel = -1;
-    } else if (mockSensorData.waterLevel <= 10) {
-      trend.waterLevel = 1;
-    }
-    
-    // Update temperature with trend
-    mockSensorData.temperature += trend.temperature;
-    if (mockSensorData.temperature >= 32) {
-      trend.temperature = -0.5;
-    } else if (mockSensorData.temperature <= 18) {
-      trend.temperature = 0.5;
-    }
-    
-    // Update humidity with trend
-    mockSensorData.humidity += trend.humidity;
-    if (mockSensorData.humidity >= 85) {
-      trend.humidity = -0.5;
-    } else if (mockSensorData.humidity <= 40) {
-      trend.humidity = 0.5;
-    }
-    
-    // Float sensor becomes active when water level is above 75%
-    mockSensorData.floatSensor = mockSensorData.waterLevel > 75;
-    
-    // Round values for cleaner display
-    return {
-      waterLevel: Math.round(mockSensorData.waterLevel),
-      floatSensor: mockSensorData.floatSensor,
-      temperature: Math.round(mockSensorData.temperature * 10) / 10,
-      humidity: Math.round(mockSensorData.humidity),
-    };
-  }
-  
-  // This would be replaced with actual API call in production
-  return mockSensorData;
+  // This will be replaced with your backend API call
+  // For initial rendering, returning default values
+  return {
+    waterLevel: 0,
+    floatSensor: false,
+    temperature: 0,
+    humidity: 0,
+  };
 };
 
 // Calculate prediction probability based on all data
@@ -131,15 +47,16 @@ export const calculatePredictionProbability = (
   sensorData: SensorData,
   weatherData: WeatherData
 ): number => {
+  // This could be implemented on your backend or frontend depending on your preference
+  // For now, keeping the calculation logic for reference
+  
   // Calculate based on multiple factors with different weights
   let probability = 0;
   
   // Water level contributes 40% to the prediction
-  // Higher water level = higher flood probability
   probability += (sensorData.waterLevel / 100) * 40;
   
   // Float sensor contributes 15% to the prediction
-  // If float sensor detects water, it adds to the probability
   if (sensorData.floatSensor) {
     probability += 15;
   }

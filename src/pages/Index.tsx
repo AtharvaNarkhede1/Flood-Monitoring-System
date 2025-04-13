@@ -16,20 +16,20 @@ import {
 
 const Index = () => {
   const [sensorData, setSensorData] = useState<SensorData>({
-    waterLevel: 45,
+    waterLevel: 0,
     floatSensor: false,
-    temperature: 24,
-    humidity: 60,
+    temperature: 0,
+    humidity: 0,
   });
   
   const [weatherData, setWeatherData] = useState<WeatherData>({
-    location: "Loading...",
+    location: "Connecting...",
     temperature: 0,
     humidity: 0,
     windSpeed: 0,
     precipitation: 0,
-    description: "",
-    icon: "01d",
+    description: "Waiting for API connection",
+    icon: "03d",
   });
   
   const [predictionValue, setPredictionValue] = useState(0);
@@ -42,7 +42,7 @@ const Index = () => {
         const weather = await fetchWeatherData();
         setWeatherData(weather);
         
-        // Get sensor data (this would be a real API call in production)
+        // Get sensor data 
         const sensors = getSensorData();
         setSensorData(sensors);
         
@@ -57,14 +57,19 @@ const Index = () => {
     loadData();
     
     // Set up a polling interval to refresh data
+    // You'll need to adjust this according to your backend update frequency
     const interval = setInterval(() => {
-      const newSensorData = getSensorData();
-      setSensorData(newSensorData);
-      
-      // Recalculate prediction with new sensor data and existing weather
-      const newPrediction = calculatePredictionProbability(newSensorData, weatherData);
-      setPredictionValue(newPrediction);
-    }, 8000); // Update every 8 seconds for more gradual changes
+      try {
+        const newSensorData = getSensorData();
+        setSensorData(newSensorData);
+        
+        // Recalculate prediction with new sensor data and existing weather
+        const newPrediction = calculatePredictionProbability(newSensorData, weatherData);
+        setPredictionValue(newPrediction);
+      } catch (error) {
+        console.error("Error updating sensor data:", error);
+      }
+    }, 10000); // Update every 10 seconds - adjust as needed
     
     return () => clearInterval(interval);
   }, [weatherData]);
