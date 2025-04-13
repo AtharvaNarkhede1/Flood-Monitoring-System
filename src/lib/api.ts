@@ -67,14 +67,63 @@ export interface SensorData {
   humidity: number; // 0-100 percentage
 }
 
+// Mock sensor data - now with consistent values instead of random ones
+let mockSensorData: SensorData = {
+  waterLevel: 45,
+  floatSensor: false,
+  temperature: 24,
+  humidity: 60,
+};
+
+// For simulation purposes - gradual changes to create realistic data patterns
+let trend = {
+  waterLevel: 1, // increasing
+  temperature: 0.5, // increasing
+  humidity: -0.5, // decreasing
+};
+
 // Get sensor data (mock for now, would be replaced with actual API calls or WebSocket)
 export const getSensorData = (): SensorData => {
-  return {
-    waterLevel: Math.floor(Math.random() * 100),
-    floatSensor: Math.random() > 0.5,
-    temperature: 20 + Math.floor(Math.random() * 10),
-    humidity: 50 + Math.floor(Math.random() * 30),
-  };
+  // For demonstration, make small changes to simulate real sensor fluctuations
+  if (MOCK_MODE) {
+    // Update water level with trend, and reverse trend if limits are reached
+    mockSensorData.waterLevel += trend.waterLevel;
+    if (mockSensorData.waterLevel >= 98) {
+      trend.waterLevel = -1;
+    } else if (mockSensorData.waterLevel <= 10) {
+      trend.waterLevel = 1;
+    }
+    
+    // Update temperature with trend
+    mockSensorData.temperature += trend.temperature;
+    if (mockSensorData.temperature >= 32) {
+      trend.temperature = -0.5;
+    } else if (mockSensorData.temperature <= 18) {
+      trend.temperature = 0.5;
+    }
+    
+    // Update humidity with trend
+    mockSensorData.humidity += trend.humidity;
+    if (mockSensorData.humidity >= 85) {
+      trend.humidity = -0.5;
+    } else if (mockSensorData.humidity <= 40) {
+      trend.humidity = 0.5;
+    }
+    
+    // Float sensor becomes active when water level is above 75%
+    mockSensorData.floatSensor = mockSensorData.waterLevel > 75;
+    
+    // Round values for cleaner display
+    return {
+      waterLevel: Math.round(mockSensorData.waterLevel),
+      floatSensor: mockSensorData.floatSensor,
+      temperature: Math.round(mockSensorData.temperature * 10) / 10,
+      humidity: Math.round(mockSensorData.humidity),
+    };
+  }
+  
+  // This would be replaced with actual API call in production
+  return mockSensorData;
 };
 
 // Calculate prediction probability based on all data
