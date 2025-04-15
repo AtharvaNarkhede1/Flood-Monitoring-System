@@ -1,4 +1,3 @@
-
 // Type definitions for API data
 export interface WeatherData {
   location: string;
@@ -21,50 +20,21 @@ export interface SensorData {
 const API_URL = 'http://localhost:3000/api/data';
 
 // Fetch data from backend
-export const fetchAllData = async (): Promise<{
-  sensorData: SensorData;
-  weatherData: WeatherData;
-  predictionProbability: number;
-}> => {
-  try {
-    const response = await fetch(API_URL);
-    
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    // Return default values if API call fails
-    return {
-      sensorData: {
-        waterLevel: 0,
-        floatSensor: false,
-        temperature: 0,
-        humidity: 0
-      },
-      weatherData: {
-        location: "Connecting...",
-        temperature: 0,
-        humidity: 0,
-        windSpeed: 0,
-        precipitation: 0,
-        description: "Waiting for API connection",
-        icon: "03d"
-      },
-      predictionProbability: 0
-    };
-  }
+export const fetchAllData = async () => {
+  return new Promise((resolve) => {
+    subscribeToData((data) => {
+      resolve(data);
+    });
+  });
 };
 
 // These functions are kept for compatibility with existing components
-export const fetchWeatherData = async (): Promise<WeatherData> => {
+export const fetchWeatherData = async () => {
   const { weatherData } = await fetchAllData();
   return weatherData;
 };
 
-export const getSensorData = async (): Promise<SensorData> => {
+export const getSensorData = async () => {
   const { sensorData } = await fetchAllData();
   return sensorData;
 };
@@ -98,4 +68,58 @@ export const calculatePredictionProbability = (
   
   // Ensure probability is between 0 and 100
   return Math.min(100, Math.max(0, Math.round(probability)));
+};
+
+import { ref, onValue, off } from 'firebase/database';
+import { db } from './firebase';
+import { WeatherData, SensorData } from './types';
+
+export const subscribeToData = (
+  onDataUpdate: (data: {
+    sensorData: SensorData;
+    weatherData: WeatherData;
+    predictionProbability: number;
+  }) => void
+) => {
+  const today = new Date().toISOString().split('T')[0];
+  const iotRef = ref(db, `flood_monitoring/iot_data/latest/${today}`);
+
+  const listener = onValue(iotRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const keys = Object.keys(data);
+      const latest = data[keys[keys.length - 1]];
+
+      // Convert Firebase data to our app's format
+      const sensorData: SensorData = {
+        waterLevel: 100 - (latest.distance / 200 * 100), // Convert distance to water level percentage
+        floatSensor: latest.float_triggered === "true",
+        temperature: latest.temperature || 0,
+        humidity: latest.humidity || 0
+      };
+
+      // Use existing weather data structure
+      const weatherData: WeatherData = {
+        location: "Local Sensor",
+        temperature: latest.temperature || 0,
+        humidity: latest.humidity || 0,
+        windSpeed: 0, // Add if you have this data
+        precipitation: 0, // Add if you have this data
+        description: latest.float_triggered === "true" ? "Warning: Water Detected" : "Normal Conditions",
+        icon: latest.float_triggered === "true" ? "09d" : "01d"
+      };
+
+      // Calculate prediction using existing function
+      const probability = calculatePredictionProbability(sensorData, weatherData);
+
+      onDataUpdate({
+        sensorData,
+        weatherData,
+        predictionProbability: probability
+      });
+    }
+  });
+
+  // Return unsubscribe function
+  return () => off(iotRef, 'value', listener);
 };
