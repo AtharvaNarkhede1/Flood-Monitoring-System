@@ -1,3 +1,6 @@
+import { ref, onValue, off } from 'firebase/database';
+import { db } from './firebase';
+
 // Type definitions for API data
 export interface WeatherData {
   location: string;
@@ -69,10 +72,6 @@ export const calculatePredictionProbability = (
   // Ensure probability is between 0 and 100
   return Math.min(100, Math.max(0, Math.round(probability)));
 };
-
-import { ref, onValue, off } from 'firebase/database';
-import { db } from './firebase';
-import { WeatherData, SensorData } from './types';
 
 export const subscribeToData = (
   onDataUpdate: (data: {

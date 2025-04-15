@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import WaterLevelCard from "@/components/WaterLevelCard";
@@ -6,11 +5,7 @@ import FloatSensorCard from "@/components/FloatSensorCard";
 import PredictionCard from "@/components/PredictionCard";
 import WeatherCard from "@/components/WeatherCard";
 import TempHumidityCard from "@/components/TempHumidityCard";
-import { 
-  fetchAllData,
-  type SensorData, 
-  type WeatherData 
-} from "@/lib/api";
+import { fetchAllData, type SensorData, type WeatherData } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -35,11 +30,14 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Fetch data function
   const fetchData = async () => {
     try {
       setError(null);
-      const data = await fetchAllData();
+      const data = await fetchAllData() as {
+        sensorData: SensorData;
+        weatherData: WeatherData;
+        predictionProbability: number;
+      };
       
       setSensorData(data.sensorData);
       setWeatherData(data.weatherData);
@@ -48,36 +46,32 @@ const Index = () => {
       if (loading) {
         setLoading(false);
         toast({
-          title: "Connected",
-          description: "Successfully connected to data sources",
+          title: "Connected to Firebase",
+          description: "Successfully connected to IoT sensors",
           variant: "default",
         });
       }
     } catch (error) {
       console.error("Error loading data:", error);
-      setError("Failed to connect to data source. Check your backend connection.");
+      setError("Failed to connect to Firebase. Check your connection.");
       
       if (!loading) {
         toast({
           title: "Connection Error",
-          description: "Failed to fetch data from sensors or weather API",
+          description: "Failed to fetch data from Firebase",
           variant: "destructive",
         });
       }
     }
   };
   
-  // Initial data load and polling setup
   useEffect(() => {
-    // Load data immediately
     fetchData();
     
-    // Set up a polling interval to refresh data
     const interval = setInterval(() => {
       fetchData();
-    }, 10000); // Update every 10 seconds - adjust as needed
+    }, 10000);
     
-    // Cleanup on unmount
     return () => clearInterval(interval);
   }, []);
   
@@ -101,13 +95,11 @@ const Index = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Left Column - Water Level + Float Sensor */}
             <div className="space-y-6">
               <WaterLevelCard waterLevel={sensorData.waterLevel} />
               <FloatSensorCard isActive={sensorData.floatSensor} />
             </div>
             
-            {/* Middle Column - Prediction Probability */}
             <div>
               <PredictionCard 
                 predictionValue={predictionValue}
@@ -117,7 +109,6 @@ const Index = () => {
               />
             </div>
             
-            {/* Right Column - Weather + Temp/Humidity */}
             <div className="space-y-6">
               <WeatherCard weatherData={weatherData} />
               <TempHumidityCard 
