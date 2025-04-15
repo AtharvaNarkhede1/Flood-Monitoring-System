@@ -26,7 +26,7 @@ export const subscribeToData = (
 
       // Convert IoT data to SensorData format
       const sensorData: SensorData = {
-        waterLevel: 100 - (latestIoT.distance / 200 * 100), // Convert distance to percentage
+        waterLevel: convertDistanceToPercentage(latestIoT.distance || 0),
         floatSensor: latestIoT.float_triggered === "true",
         temperature: latestIoT.temperature || 0,
         humidity: latestIoT.humidity || 0
@@ -73,6 +73,20 @@ export const subscribeToData = (
   };
 };
 
+// Helper function to convert distance to percentage
+// Assuming sensor is placed at top, and max water height is 200cm
+// So 0cm distance = 100% water level, 200cm distance = 0% water level
+const convertDistanceToPercentage = (distanceCm: number): number => {
+  // Set a max distance (when tank is empty)
+  const maxDistance = 200; // 200cm when empty
+  
+  // Convert: closer to sensor = higher water level
+  const percentage = Math.max(0, Math.min(100, 100 - (distanceCm / maxDistance * 100)));
+  
+  // Return as a rounded integer percentage
+  return Math.round(percentage);
+};
+
 // Helper function to get weather icon code
 const getWeatherIcon = (description: string): string => {
   const desc = description.toLowerCase();
@@ -87,10 +101,11 @@ const getWeatherIcon = (description: string): string => {
 const CITY = "Mumbai"; // Matching your Python script
 
 // These functions are kept for compatibility
-export const fetchAllData = () => {
+export const fetchAllData = async () => {
   return new Promise((resolve) => {
-    subscribeToData((data) => {
+    const unsubscribe = subscribeToData((data) => {
       resolve(data);
+      unsubscribe();
     });
   });
 };
@@ -122,11 +137,11 @@ export const calculatePredictionProbability = (
 
 // Export these for compatibility
 export const fetchWeatherData = async () => {
-  const { weatherData } = await fetchAllData();
-  return weatherData;
+  const data = await fetchAllData() as any;
+  return data.weatherData;
 };
 
 export const getSensorData = async () => {
-  const { sensorData } = await fetchAllData();
-  return sensorData;
+  const data = await fetchAllData() as any;
+  return data.sensorData;
 };
