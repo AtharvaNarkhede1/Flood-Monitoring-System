@@ -1,6 +1,9 @@
+
 import { ref, onValue, off } from 'firebase/database';
 import { db } from './firebase';
 import { WeatherData, SensorData, FirebaseData } from './types';
+
+export type { WeatherData, SensorData };
 
 // Fetch data from Firebase
 export const subscribeToData = (
@@ -92,26 +95,10 @@ export const fetchAllData = () => {
   });
 };
 
-// Fetch data from backend
-export const fetchWeatherData = async () => {
-  const { weatherData } = await fetchAllData();
-  return weatherData;
-};
-
-export const getSensorData = async () => {
-  const { sensorData } = await fetchAllData();
-  return sensorData;
-};
-
-// Calculate prediction probability based on all data
 export const calculatePredictionProbability = (
   sensorData: SensorData,
   weatherData: WeatherData
 ): number => {
-  // This could be implemented on your backend or frontend depending on your preference
-  // For now, keeping the calculation logic for reference
-  
-  // Calculate based on multiple factors with different weights
   let probability = 0;
   
   // Water level contributes 40% to the prediction
@@ -127,9 +114,19 @@ export const calculatePredictionProbability = (
   
   // High humidity and temp contribute 15% to the prediction
   const tempHumidityFactor = ((sensorData.humidity / 100) * 0.7) + 
-                             ((Math.min(sensorData.temperature, 40) / 40) * 0.3);
+                           ((Math.min(sensorData.temperature, 40) / 40) * 0.3);
   probability += tempHumidityFactor * 15;
   
-  // Ensure probability is between 0 and 100
   return Math.min(100, Math.max(0, Math.round(probability)));
+};
+
+// Export these for compatibility
+export const fetchWeatherData = async () => {
+  const { weatherData } = await fetchAllData();
+  return weatherData;
+};
+
+export const getSensorData = async () => {
+  const { sensorData } = await fetchAllData();
+  return sensorData;
 };

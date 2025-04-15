@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import WaterLevelCard from "@/components/WaterLevelCard";
@@ -5,7 +6,7 @@ import FloatSensorCard from "@/components/FloatSensorCard";
 import PredictionCard from "@/components/PredictionCard";
 import WeatherCard from "@/components/WeatherCard";
 import TempHumidityCard from "@/components/TempHumidityCard";
-import { fetchAllData, type SensorData, type WeatherData } from "@/lib/api";
+import { subscribeToData, type SensorData, type WeatherData } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -13,7 +14,7 @@ const Index = () => {
     waterLevel: 0,
     floatSensor: false,
     temperature: 0,
-    humidity: 0,
+    humidity: 0
   });
   
   const [weatherData, setWeatherData] = useState<WeatherData>({
@@ -29,16 +30,9 @@ const Index = () => {
   const [predictionValue, setPredictionValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const fetchData = async () => {
-    try {
-      setError(null);
-      const data = await fetchAllData() as {
-        sensorData: SensorData;
-        weatherData: WeatherData;
-        predictionProbability: number;
-      };
-      
+
+  useEffect(() => {
+    const unsubscribe = subscribeToData((data) => {
       setSensorData(data.sensorData);
       setWeatherData(data.weatherData);
       setPredictionValue(data.predictionProbability);
@@ -51,30 +45,11 @@ const Index = () => {
           variant: "default",
         });
       }
-    } catch (error) {
-      console.error("Error loading data:", error);
-      setError("Failed to connect to Firebase. Check your connection.");
-      
-      if (!loading) {
-        toast({
-          title: "Connection Error",
-          description: "Failed to fetch data from Firebase",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-  
-  useEffect(() => {
-    fetchData();
-    
-    const interval = setInterval(() => {
-      fetchData();
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, []);
-  
+    });
+
+    return () => unsubscribe();
+  }, [loading]);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
