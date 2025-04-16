@@ -23,6 +23,7 @@ export const subscribeToData = (
     if (iotData) {
       const keys = Object.keys(iotData);
       const latestIoT = iotData[keys[keys.length - 1]] as FirebaseData;
+      console.log("Latest IoT data:", latestIoT);
 
       // Convert IoT data to SensorData format
       const sensorData: SensorData = {
@@ -35,7 +36,10 @@ export const subscribeToData = (
       // Get weather data and calculate prediction
       onValue(weatherRef, (weatherSnapshot) => {
         const weatherData = weatherSnapshot.val();
+        console.log("Weather data:", weatherData);
+        
         const latestWeather = weatherData ? weatherData[Object.keys(weatherData)[Object.keys(weatherData).length - 1]] : null;
+        console.log("Latest weather:", latestWeather);
 
         const weatherInfo: WeatherData = latestWeather ? {
           location: CITY,
@@ -63,6 +67,27 @@ export const subscribeToData = (
           predictionProbability: probability
         });
       }, { onlyOnce: true });
+    } else {
+      console.log("No IoT data available");
+      // Return fallback data when no data is available
+      onDataUpdate({
+        sensorData: {
+          waterLevel: 0,
+          floatSensor: false,
+          temperature: 0,
+          humidity: 0
+        },
+        weatherData: {
+          location: CITY,
+          temperature: 0,
+          humidity: 0,
+          windSpeed: 0,
+          precipitation: 0,
+          description: "No data available",
+          icon: "03d"
+        },
+        predictionProbability: 0
+      });
     }
   });
 

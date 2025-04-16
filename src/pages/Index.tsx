@@ -33,6 +33,7 @@ const Index = () => {
 
   useEffect(() => {
     const unsubscribe = subscribeToData((data) => {
+      console.log("Received data update:", data);
       setSensorData(data.sensorData);
       setWeatherData(data.weatherData);
       setPredictionValue(data.predictionProbability);
